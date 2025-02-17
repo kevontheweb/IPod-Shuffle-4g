@@ -124,19 +124,26 @@ class Text2Speech(object):
         else:
             voiceoverAvailable = True
 
-        # Check for gtts voicever
-        if not exec_exists_in_path("gtts-cli"):
-            Text2Speech.valid_tts['gtts'] = False
-            print("Warning: gtts not found, voiceover won't be generated using it.")
-        else:
-            voiceoverAvailable = True
-
         # Check for Russian RHVoice voiceover
         if not exec_exists_in_path("RHVoice"):
             Text2Speech.valid_tts['RHVoice'] = False
             print("Warning: RHVoice not found, Russian voicever won't be generated.")
         else:
             voiceoverAvailable = True
+
+        if not exec_exists_in_path("gtts-cli"):
+            Text2Speech.valid_tts['gtts'] = False
+            print("Warning: gtts not found, voiceover won't be generated using it.")
+        else:
+            voiceoverAvailable = True
+
+
+        # Check for voicerss.org api key
+        # if not exec_exists_in_path("RHVoice"):
+        #     Text2Speech.valid_tts['RHVoice'] = False
+        #     print("Warning: RHVoice not found, Russian voicever won't be generated.")
+        # else:
+        #     voiceoverAvailable = True
 
         # Return if we at least found one voiceover program.
         # Otherwise this will result in silent voiceover for tracks and "Playlist N" for playlists.
@@ -159,11 +166,11 @@ class Text2Speech(object):
         else:
             if Text2Speech.pico2wave(out_wav_path, text):
                 return True
+            elif Text2Speech.gtts(out_wav_path, text):
+                return True
             elif Text2Speech.espeak(out_wav_path, text):
                 return True
             elif Text2Speech.say(out_wav_path, text):
-                return True
-            elif Text2Speech.gtts(out_wav_path, text):
                 return True
             else:
                 return False
@@ -194,7 +201,36 @@ class Text2Speech(object):
     def gtts(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['gtts']:
             return False
-        subprocess.call([ "gtts-cli", unicodetext, '--output', out_wav_path ])
+        # subprocess.call([
+        #     "gtts-cli",
+        #     unicodetext,
+        #     '--output',
+        #     out_wav_path
+        # ])
+
+
+        tmp_mp3_path = f"{out_wav_path.strip(".wav")}.mp3"
+        # Generate speech
+        subprocess.call([
+            "gtts-cli",
+            unicodetext,
+            "--output",
+            tmp_mp3_path
+        ])
+
+        # Convert to correct format (suppress output and assume "yes")
+        subprocess.call([
+            "ffmpeg",
+            "-y",  # Assume "yes" to overwrite
+            "-i", tmp_mp3_path,
+            "-acodec", "pcm_s16le",
+            "-ac", "1",
+            "-ar", "22050",
+            out_wav_path
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # Suppress output
+
+        subprocess.call(["rm", tmp_mp3_path])
+
         return True
 
     @staticmethod
@@ -307,7 +343,8 @@ class TunesSD(Record):
                            ("total_number_of_playlists", ("I", 0)),
                            ("unknown2", ("Q", 0)),
                            ("max_volume", ("B", 0)),
-                           ("voiceover_enabled", ("B", int(self.track_voiceover))),
+                           ("voiceover_enabled", ("B", int(1))),
+                           # ("voiceover_enabled", ("B", int(self.track_voiceover))),
                            ("unknown3", ("H", 0)),
                            ("total_tracks_without_podcasts", ("I", 0)),
                            ("track_header_offset", ("I", 64)),
