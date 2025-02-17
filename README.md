@@ -60,12 +60,21 @@ Optional Voiceover support
 * [eSpeak](http://espeak.sourceforge.net/)
 * [PicoSpeaker](http://picospeaker.tk/readme.php)
 * [RHVoice (master branch, 3e31edced402a08771d2c48c73213982cbe9333e)](https://github.com/Olga-Yakovleva/RHVoice) -- (Russian files only)
+* [gtts](https://pypi.org/project/gTTS/)
 * [SoX](http://sox.sourceforge.net) -- (Russian files)
 * say (macOS)
 
 ##### Ubuntu
 
 `apt-get install python3 python-mutagen libttspico*`
+
+##### Fedora
+
+`sudo dnf install python3 python3-mutagen`
+
+Optionally,
+
+`sudo dnf install espeak espeak-ng gtts`
 
 ##### Arch Linux
 
